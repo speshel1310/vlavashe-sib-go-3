@@ -1281,7 +1281,7 @@ class Game {
         try {
             if (typeof ym !== 'undefined') {
                 console.log(`Отправка события: ${eventName}`, params);
-                ym(105435485, 'reachGoal', eventName, params);
+                ym(105524141, 'reachGoal', eventName, params);
             }
         } catch (error) {
             console.error('Ошибка при отправке события в метрику:', error);
