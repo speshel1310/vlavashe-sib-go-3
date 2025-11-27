@@ -1,0 +1,957 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Подключаем шрифт Orbitron */
+/* @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap'); */ /* Удаляем эту строку */
+
+
+body {
+    font-family: 'Orbitron', Arial, sans-serif; /* Применяем шрифт */
+    background-color: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    color: #fff;
+    background: linear-gradient(45deg, #000000, #1a1a1a);
+    /* Добавим для предотвращения выделения текста на мобильных при тапе */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.game-container {
+    width: 100%;
+    max-width: 100%; /* Убираем ограничение максимальной ширины */
+    background-color: rgba(0, 0, 0, 0.8);
+    border-radius: 8px;
+    padding: 10px; /* Уменьшаем отступы */
+    box-shadow: 0 0 20px rgba(241, 147, 186, 0.3);
+    position: relative;
+    border: 2px solid #F193BA;
+    box-sizing: border-box;
+}
+
+.game-header {
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 10px; /* Уменьшаем отступы */
+    background: rgba(0, 0, 0, 0.8);
+    color: #F193BA;
+    min-height: 35px; /* Уменьшаем высоту */
+    margin-bottom: 5px; /* Уменьшаем отступ снизу */
+    border-bottom: 1px solid rgba(241, 147, 186, 0.5);
+}
+
+/* Элементы внутри шапки (Очки и Жизни) */
+/* Используем классы, если вы их добавили, иначе first/last-child */
+.score-display, /* Предполагаемый класс для очков */
+.lives-display, /* Предполагаемый класс для жизней */
+.game-header > div:first-child, /* Фоллбэк, если классов нет */
+.game-header > div:last-child {  /* Фоллбэк, если классов нет */
+     font-size: 0.8em;
+     font-weight: bold;
+     white-space: nowrap;
+     flex-shrink: 0;
+     letter-spacing: 0.5px;
+}
+
+.logo {
+    /* Логотип теперь как обычный flex-item */
+    flex-grow: 0;
+    flex-shrink: 1;
+    text-align: center;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px; /* Уменьшаем размер */
+    font-weight: bold;
+    color: #F193BA;
+    letter-spacing: 1px;
+    text-shadow:
+        1px 1px 0 #000,
+        -1px -1px 0 #000,
+        1px -1px 0 #000,
+        -1px 1px 0 #000;
+    margin: 0 5px;
+    /* Добавим обрезку текста на всякий случай */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 40%; /* Уменьшаем ширину */
+}
+
+/* Убрали .logo::before */
+
+.game-area {
+    position: relative; /* Для позиционирования дочерних */
+    width: 100%;
+    height: 300px; /* Уменьшаем высоту */
+    background-color: #000;
+    overflow: hidden;
+    border: 1px solid rgba(241, 147, 186, 0.5); /* Тоньше рамка */
+    border-radius: 6px; /* Меньше скругление */
+    margin-bottom: 10px; /* Уменьшаем отступ */
+}
+
+/* Разделители полос */
+.lane-divider {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px; /* Ширина линии */
+    background: repeating-linear-gradient(
+        to bottom,
+        rgba(241, 147, 186, 0.4),
+        rgba(241, 147, 186, 0.4) 10px, /* Длина штриха */
+        transparent 10px,
+        transparent 20px /* Длина пропуска */
+    );
+}
+.lane-divider.left {
+    left: 33.33%;
+    transform: translateX(-1px); /* Центрируем линию */
+}
+.lane-divider.right {
+    left: 66.66%;
+     transform: translateX(-1px); /* Центрируем линию */
+}
+
+
+#player {
+    position: absolute;
+    bottom: 10px;
+    /* left устанавливается из JS, но мы перейдем на transform */
+    /* transform: translateX(-50%); /* Будет учтено в JS */
+    font-size: 1.8em; /* Уменьшаем размер */
+    transition: transform 0.15s ease-out; /* Используем transform для transition */
+    z-index: 10;
+    filter: drop-shadow(0 0 6px #F193BA); /* Меньше свечение */
+    /* Добавим картинку, если нужно */
+    /* content: url('path/to/player-image.png'); */
+    /* width: 40px; */
+    /* height: auto; */
+}
+
+.obstacle {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    font-size: 1.6em;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Убираем свечение */
+    /* filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.6)); */
+    transform: translateX(-50%); /* Центрируем элемент относительно его style.left */
+    /* animation: obstacleShake 0.5s infinite; */
+    transform-origin: center center;
+}
+
+/* @keyframes obstacleShake { ... } */ /* Можно закомментировать */
+
+.coin {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    font-size: 1.2em;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Убираем свечение */
+    /* filter: drop-shadow(0 0 8px #F193BA); */
+    transform: translateX(-50%); /* Центрируем элемент относительно его style.left */
+    /* animation: coinPulse 1.2s infinite ease-in-out; */ /* Временно отключаем для теста */
+}
+
+/* @keyframes coinPulse { ... } */ /* Временно отключаем для теста */
+
+.game-controls {
+    margin-top: 8px;
+    text-align: center;
+    display: none; /* Hide the restart button on the main screen */
+}
+
+/* Общий стиль для всех кнопок в игре */
+.game-btn {
+    padding: 8px 15px;
+    font-size: 0.9em;
+    background-color: #F193BA;
+    color: #000;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    /* transition: all 0.2s ease; */ /* Меняем это */
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease; /* На это */
+    font-family: 'Orbitron', Arial, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    box-shadow: 0 4px 10px rgba(241, 147, 186, 0.4);
+    font-weight: bold;
+    margin: 3px;
+}
+
+.game-btn:hover {
+    background-color: #fff;
+    box-shadow: 0 6px 15px rgba(241, 147, 186, 0.6);
+    transform: translateY(-1px);
+}
+
+.game-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 5px rgba(241, 147, 186, 0.3);
+}
+
+/* Стиль для управляющих кнопок (стрелки влево/вправо) */
+.controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 15px;
+    gap: 10px;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.controls button {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: #F193BA;
+    border: 2px solid #F193BA;
+    border-radius: 50%;
+    cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 3px;
+    transition: all 0.2s ease;
+}
+
+.controls button:hover {
+    background-color: rgba(241, 147, 186, 0.2);
+}
+
+.controls button:active {
+    transform: scale(0.95);
+}
+
+/* Специальные стили для кнопок перемещения */
+#btn-left, #btn-right {
+    width: 40%;
+    height: 60px;
+    border-radius: 10px;
+    flex-grow: 1;
+}
+
+/* Контейнер для правых кнопок (звук и трофей) */
+.controls-right {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+/* Стиль для кнопки таблицы рекордов */
+.controls .control-button {
+    border-radius: 5px;
+    width: auto;
+    height: auto;
+    background-color: #F193BA;
+    color: #000;
+    padding: 8px 12px;
+    font-family: 'Orbitron', Arial, sans-serif;
+    font-size: 0.8em;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.controls .control-button:hover {
+    background-color: #fff;
+}
+
+/* Медиа-запрос для тонкой настройки на совсем маленьких экранах */
+@media (max-width: 360px) {
+     .game-container {
+        padding: 10px;
+     }
+     .game-header {
+         padding: 5px 8px;
+         min-height: 40px;
+     }
+     .game-header .logo {
+        font-size: 14px;
+        max-width: 45%;
+     }
+    .score-display,
+    .lives-display,
+    .game-header > div:first-child,
+    .game-header > div:last-child {
+        font-size: 0.75em;
+        letter-spacing: 0.5px;
+    }
+     .game-area {
+        height: 300px;
+     }
+     .controls button {
+        width: 45px;
+        height: 45px;
+        font-size: 18px;
+     }
+     .sound-button, .trophy-button {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+        bottom: 5px;
+        right: 5px;
+     }
+     /* Смещаем кнопку звука влево от кнопки трофея */
+     .sound-button {
+        right: 50px;
+     }
+     .restart-button {
+        padding: 8px 20px;
+        font-size: 1em;
+     }
+     .game-over-content h2, .win-content h2 {
+         font-size: 1.2em;
+     }
+}
+
+/* Переопределяем стили для кнопок в окне game-over */
+#game-over .game-over-content button {
+    margin-top: 10px;
+    width: 100%;
+    padding: 10px 15px;
+}
+
+/* Стиль для кнопки "Сменить игрока" */
+#change-player {
+    margin-top: 10px;
+    background-color: rgba(241, 147, 186, 0.3);
+    color: #F193BA;
+    border: 1px solid #F193BA;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Orbitron', Arial, sans-serif;
+    transition: all 0.2s ease;
+    width: 100%;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+#change-player:hover {
+    background-color: rgba(241, 147, 186, 0.5);
+}
+
+/* Стиль для кнопки закрытия таблицы рекордов */
+#close-leaderboard {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background-color: #F193BA;
+    color: #000;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Orbitron', Arial, sans-serif;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
+}
+
+#close-leaderboard:hover {
+    background-color: #fff;
+}
+
+/* Кнопка рестарт в игре */
+#restart,
+#play-again {
+    background-color: #F193BA;
+    color: #000;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Orbitron', Arial, sans-serif;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(241, 147, 186, 0.4);
+    width: 100%;
+    margin-top: 10px;
+}
+
+#restart:hover,
+#play-again:hover {
+    background-color: #fff;
+    box-shadow: 0 6px 15px rgba(241, 147, 186, 0.6);
+}
+
+/* Скрытие элементов */
+.hidden {
+    display: none !important; /* Используем !important для надежности */
+}
+
+/* Экраны Game Over и Win */
+#game-over, #win-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* Размеры больше не нужны, они займут всю родительскую область */
+    background-color: rgba(0, 0, 0, 0.85); /* Чуть плотнее фон */
+    display: flex; /* Используем flex для центрирования контента */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px; /* Добавим отступы */
+    /* Плавное появление */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+/* Когда экран должен быть виден (класс НЕ hidden) */
+#game-over:not(.hidden),
+#win-screen:not(.hidden) {
+    opacity: 1;
+    visibility: visible;
+}
+
+
+.game-over-content, .win-content {
+    background-color: rgba(10, 10, 10, 0.9); /* Темнее фон контента */
+    padding: 25px;
+    border-radius: 8px;
+    text-align: center;
+    width: 90%; /* Ширина относительно родителя (#game-over/#win-screen) */
+    max-width: 350px; /* Максимальная ширина контента */
+    border: 1px solid #F193BA;
+    box-shadow: 0 0 25px rgba(241, 147, 186, 0.25);
+    color: #eee; /* Светлее текст */
+}
+
+.game-over-content h2, .win-content h2 {
+    color: #F193BA;
+    text-transform: uppercase;
+    letter-spacing: 2px; /* Меньше разрядка */
+    margin-bottom: 15px;
+    font-size: 1.4em; /* Немного меньше */
+    text-shadow: 0 0 8px rgba(241, 147, 186, 0.7);
+}
+
+.game-over-content p, .win-content p {
+    margin: 10px 0;
+    font-size: 0.95em;
+    line-height: 1.4;
+}
+
+/* Стили для финального счета */
+#final-score, #final-score-win { /* Используйте один ID или разные */
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #fff;
+    margin: 15px 0;
+}
+
+/* Game info section with lives */
+.game-info {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 0 15px;
+}
+
+.lives-display {
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #F193BA;
+    display: flex;
+    align-items: center;
+    letter-spacing: 1px;
+}
+
+.lives-count {
+    margin-left: 5px;
+    color: #ff4d4d;
+    font-weight: bold;
+}
+
+/* Controls (formerly mobile-controls) */
+.mobile-controls {
+    display: none; /* Hide the old class */
+}
+
+/* Update leaderboard button styles - we no longer need this as it's part of controls */
+.leaderboard-button {
+    display: none; /* Hide the old button */
+}
+
+/* Сообщения об ошибках/бонусах */
+.error-message, .bonus-text {
+    margin: 10px 0;
+    font-size: 0.9em;
+    padding: 5px;
+    border-radius: 3px;
+}
+.error-message {
+    color: #ff4d4d;
+    background-color: rgba(255, 77, 77, 0.1);
+    border: 1px solid rgba(255, 77, 77, 0.3);
+    text-shadow: none;
+}
+.bonus-text {
+    color: #4dff4d;
+     background-color: rgba(77, 255, 77, 0.1);
+     border: 1px solid rgba(77, 255, 77, 0.3);
+    text-shadow: none;
+}
+
+/* Сообщение о столкновении */
+.collision-message {
+    color: #ff4d4d;
+    text-shadow: 0 0 5px #ff4d4d;
+    font-size: 0.85em;
+    font-weight: bold;
+    z-index: 100;
+    animation: messageFloat 1s ease-out forwards;
+    white-space: nowrap;
+    font-family: 'Orbitron', Arial, sans-serif;
+    position: absolute; /* Добавлено для анимации */
+    pointer-events: none; /* Чтобы не мешало кликам */
+}
+
+@keyframes messageFloat {
+    0% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-40px) scale(0.8); /* Улетает вверх и уменьшается */
+        opacity: 0;
+    }
+}
+
+/* Кнопка звука (стиль для кнопки в контролах) */
+.sound-button {
+    z-index: 100;
+    cursor: pointer;
+    width: 45px;
+    height: 45px;
+    padding: 0;
+    font-size: 22px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid #F193BA;
+    color: #F193BA;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+.sound-button:hover {
+    background: rgba(241, 147, 186, 0.15);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.6);
+}
+
+.sound-button:active {
+    transform: scale(0.95);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+/* Кнопка трофея (стиль для кнопки в контролах) */
+.trophy-button {
+    z-index: 100;
+    cursor: pointer;
+    width: 45px;
+    height: 45px;
+    padding: 0;
+    font-size: 22px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid #F193BA;
+    color: #F193BA;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+.trophy-button:hover {
+    background: rgba(241, 147, 186, 0.15);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.6);
+}
+
+.trophy-button:active {
+    transform: scale(0.95);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+/* Медиа-запрос для iframe 4:5 */
+@media (max-aspect-ratio: 4/5) {
+    html, body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+    }
+    
+    .game-container {
+        margin: 0;
+        padding: 8px;
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .game-area {
+        flex-grow: 1;
+        height: 0; /* Важно для правильного flex-grow */
+    }
+    
+    /* Уменьшаем размер экрана авторизации */
+    #auth-screen {
+        position: absolute;
+    }
+    
+    .auth-content {
+        padding: 15px;
+        /* Убедимся, что контент может скроллиться, если не влезает */
+        /* overflow-y: auto; /* Может понадобиться, если контент все равно слишком высокий */
+        /* max-height: 90vh; /* Ограничиваем высоту, чтобы кнопка точно влезла */ 
+    }
+    
+    .auth-content h2 {
+        font-size: 1.5em; /* Уменьшаем заголовок */
+        margin-bottom: 10px;
+    }
+
+    #pending-score-auth-message, /* Используем новый ID, если он отличается от #pending-score-message */
+    .promo-code-block {
+        padding: 10px;
+        margin-bottom: 10px;
+        font-size: 0.85em;
+    }
+
+    .promo-code-value {
+        font-size: 1em;
+        padding: 6px 10px;
+    }
+
+    .game-rules {
+        padding: 10px;
+        font-size: 0.8em; /* Уменьшаем правила, если они показываются */
+        margin-bottom: 10px;
+    }
+    
+    .form-group label {
+        font-size: 0.8em;
+    }
+
+    .form-group input {
+        padding: 8px;
+        font-size: 15px; /* Чтобы не зумило на мобильных */
+    }
+
+    #start-game-btn {
+        padding: 10px;
+        margin-top: 10px; /* Уменьшаем отступ */
+        font-size: 0.9em;
+    }
+    
+    /* Фиксируем размер всплывающих окон */
+    #leaderboard,
+    #game-over {
+        position: absolute;
+    }
+    
+    /* Уменьшаем размер кнопок управления */
+    .controls {
+        margin-top: 5px;
+        gap: 3px;
+    }
+    
+    .controls button {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+    
+    /* Оптимизация для экрана завершения игры */
+    .game-over-content, .win-content {
+        padding: 10px;
+    }
+    
+    /* Оптимизация для таблицы рекордов */
+    .leaderboard-content {
+        padding: 10px;
+    }
+}
+
+/* Авторизация */
+#auth-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, #000000, #1a1a1a);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.auth-content {
+    background-color: rgba(0, 0, 0, 0.8);
+    border-radius: 10px;
+    padding: 25px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 0 20px rgba(241, 147, 186, 0.3);
+    border: 2px solid #F193BA;
+    text-align: center;
+}
+
+.auth-content h2 {
+    color: #F193BA;
+    font-size: 1.8em;
+    margin-bottom: 15px;
+    text-shadow: 0 0 10px rgba(241, 147, 186, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+#pending-score-message {
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #F193BA;
+    color: #F193BA;
+    font-weight: bold;
+    text-align: center;
+    animation: pulse 1.5s infinite; /* Этот класс был для другого сообщения, переименуем или удалим если id используется */
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 5px rgba(241, 147, 186, 0.5); }
+    50% { box-shadow: 0 0 15px rgba(241, 147, 186, 0.8); }
+    100% { box-shadow: 0 0 5px rgba(241, 147, 186, 0.5); }
+}
+
+/* Стили для блока с промокодом на экране авторизации */
+.promo-code-block {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid rgba(241, 147, 186, 0.3);
+    text-align: center;
+}
+
+.promo-code-block p {
+    margin-bottom: 10px;
+    font-size: 0.9em;
+    color: #fff;
+}
+
+.promo-codes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+}
+
+.promo-code-value {
+    display: inline-block;
+    background-color: #000;
+    border: 2px dashed #F193BA;
+    color: #F193BA;
+    font-family: 'Orbitron', monospace;
+    font-size: 1.2em;
+    font-weight: bold;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+    margin-bottom: 0;
+    width: auto;
+    min-width: 120px;
+}
+
+.promo-code-value:hover {
+    background-color: #F193BA;
+    color: #000;
+}
+
+.promo-copied-message {
+    font-size: 0.8em;
+    color: #4dff4d; /* Зеленый цвет для подтверждения */
+    font-weight: bold;
+    margin-top: 5px;
+    height: 1.2em; /* Резервируем место, чтобы не прыгал layout */
+}
+
+.game-rules {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(241, 147, 186, 0.3);
+    text-align: left;
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+
+.game-rules p {
+    margin-bottom: 10px;
+    color: #fff;
+}
+
+.game-rules p:last-child {
+    margin-bottom: 0;
+}
+
+#player-phone {
+    padding: 10px;
+    font-size: 16px;
+    width: 100%;
+    border: 1px solid #F193BA;
+    border-radius: 5px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+/* Таймер */
+.timer {
+    font-weight: bold;
+    white-space: nowrap;
+    letter-spacing: 1px;
+    color: #F193BA;
+}
+
+#leaderboard {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.leaderboard-content {
+    background-color: rgba(10, 10, 10, 0.9);
+    padding: 25px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    border: 1px solid #F193BA;
+    box-shadow: 0 0 25px rgba(241, 147, 186, 0.25);
+    color: #eee;
+}
+
+.leaderboard-content h2 {
+    color: #F193BA;
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 1.5em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+#leaderboard-list {
+    margin-bottom: 20px;
+}
+
+.leaderboard-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0; /* Уменьшаем отступы */
+    border-bottom: 1px solid rgba(241, 147, 186, 0.3);
+}
+
+.leaderboard-item:last-child {
+    border-bottom: none;
+}
+
+.leaderboard-rank {
+    width: 85px; /* Увеличиваем ширину для "1е место" */
+    font-weight: bold;
+    color: #F193BA;
+}
+
+.leaderboard-name {
+    flex-grow: 1;
+    padding: 0 10px;
+}
+
+.leaderboard-score {
+    font-weight: bold;
+}
+
+.result-message {
+    font-weight: bold;
+    color: #F193BA;
+    margin: 10px 0;
+}
+
+.best-score {
+    margin: 5px 0 15px 0;
+    font-size: 0.9em;
+}
+
+/* Добавляем класс для пустых слотов в таблице рекордов */
+.leaderboard-item.empty-slot {
+    opacity: 0.5; /* Делаем прозрачнее */
+}
+
+/* Add this rule to set the font size for the phone input field */
+#player-phone {
+    font-size: 16px; /* Set font size to prevent zoom on mobile */
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group-hidden {
+    display: none;
+}
+
+.auth-content h2 {
+    color: #F193BA;
+    font-size: 1.8em;
+    margin-bottom: 15px;
+    text-shadow: 0 0 10px rgba(241, 147, 186, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
